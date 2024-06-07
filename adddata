@@ -1,0 +1,24 @@
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred,{
+    'databaseURL':"https://attendance-446db-default-rtdb.firebaseio.com/"
+
+})
+ref=db.reference('Students')
+data = {
+    "245321748001":
+        {
+            "name":"Musk Mawa",
+            "major":"Computer Science",
+            "total_attendance":26,
+            "last_attendance_time":"2024-04-21 00:54:33",
+            "standing":"G",
+            "year":2024,
+            "starting_year":2021
+        }
+}
+for key,value in data.items():
+    ref.child(key).set(value)
+
