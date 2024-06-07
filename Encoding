@@ -1,0 +1,47 @@
+import cv2
+import pickle
+import os
+import face_recognition
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import  storage
+from firebase_admin import db
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred,{
+    'databaseURL':"https://attendance-446db-default-rtdb.firebaseio.com/",
+    'storageBucket':"attendance-446db.appspot.com"
+})
+folderpath='images'
+imgpathlist=os.listdir(folderpath)
+imglist=[]
+studentids=[]
+for img in imgpathlist:
+    imglist.append(cv2.imread(os.path.join(folderpath, img)))
+
+    id, extension=os.path.splitext(img)
+    if extension == '.png':
+        studentids.append(id.split('.')[0])
+    filename = f'{folderpath}/{img}'
+    bucket = storage.bucket()
+    blob=bucket.blob(filename)
+    with open(filename, "rb") as file:
+        blob.upload_from_file(file)
+
+print(studentids)
+def findencoding(imglist):
+    encodelist=[]
+    for img in imglist:
+        rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        face_locations = face_recognition.face_locations(rgb_img)
+        if len(face_locations) > 0:
+            encode = face_recognition.face_encodings(rgb_img, face_locations)[0]
+            encodelist.append(encode)
+    return encodelist
+
+print("Encoding started")
+encodelistknown=findencoding(imglist)
+encodinglistwithids=[encodelistknown,studentids]
+print("Encoding Ended")
+file=open("Encodesfile.p",'wb')
+pickle.dump(encodinglistwithids,file)
+file.close()
